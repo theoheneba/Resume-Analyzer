@@ -1,12 +1,29 @@
 import OpenAI from 'openai';
+import { config } from '../../config/env';
+import type { OpenAIConfig } from './types';
 
-export const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+export const openAIConfig: OpenAIConfig = {
+  apiKey: config.openai.apiKey,
+  isDemoMode: !config.openai.apiKey
+};
 
-if (!OPENAI_API_KEY) {
-  console.error('OpenAI API key is not configured. Please set VITE_OPENAI_API_KEY in your environment variables.');
+let client: OpenAI | null = null;
+
+export function getOpenAIClient(): OpenAI | null {
+  if (client) return client;
+  
+  if (!openAIConfig.apiKey) {
+    return null;
+  }
+
+  try {
+    client = new OpenAI({
+      apiKey: openAIConfig.apiKey,
+      dangerouslyAllowBrowser: true
+    });
+    return client;
+  } catch (error) {
+    console.warn('Failed to initialize OpenAI client:', error);
+    return null;
+  }
 }
-
-export const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true // Only for demo purposes
-});

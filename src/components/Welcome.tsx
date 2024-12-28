@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, CheckCircle, FileText } from 'lucide-react';
+import { FileText, Sparkles, CheckCircle } from 'lucide-react';
 
 export function Welcome() {
   return (

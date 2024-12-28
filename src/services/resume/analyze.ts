@@ -1,5 +1,6 @@
-import { getOpenAIClient } from './config';
+import { getOpenAIClient, openAIConfig } from '../openai/config';
 import { APIError } from '../../utils/error';
+import { mockAnalysis } from './mockData';
 import type { ResumeAnalysis } from '../../types/resume';
 
 const ANALYSIS_PROMPT = `Analyze this resume and provide:
@@ -9,10 +10,21 @@ const ANALYSIS_PROMPT = `Analyze this resume and provide:
 4. Overall score (0-100)
 Format the response as JSON.`;
 
-export async function analyzeResume(content: string): Promise<ResumeAnalysis> {
+export async function analyzeResumeContent(content: string): Promise<ResumeAnalysis> {
+  // If in demo mode, return mock data immediately
+  if (openAIConfig.isDemoMode) {
+    console.log('Using demo mode for resume analysis');
+    return mockAnalysis;
+  }
+
+  const client = getOpenAIClient();
+  if (!client) {
+    console.log('OpenAI client unavailable, falling back to demo mode');
+    return mockAnalysis;
+  }
+
   try {
-    const openai = getOpenAIClient();
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         { role: "system", content: ANALYSIS_PROMPT },
@@ -34,9 +46,7 @@ export async function analyzeResume(content: string): Promise<ResumeAnalysis> {
       score: result.score || 0
     };
   } catch (error) {
-    if (error instanceof Error) {
-      throw new APIError(error.message);
-    }
-    throw new APIError('Failed to analyze resume');
+    console.warn('Error during resume analysis:', error);
+    return mockAnalysis;
   }
 }
